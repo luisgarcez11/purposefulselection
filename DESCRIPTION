@@ -8,6 +8,7 @@ Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: AGPL (>= 3)
 Encoding: UTF-8
+<<<<<<< HEAD
 Imports: 
     broom,
     dplyr,
@@ -30,3 +31,4 @@ LazyData: true
 Depends: 
     R (>= 2.10)
 RoxygenNote: 7.2.3
+>>>>>>> 9f316b9b9729441c17b8e57cda523c2dc4602e6b
