@@ -56,6 +56,7 @@ stepwise <- function(data, outcome_var,
   m_0 <- glm(formula = form_0, family = "binomial", data = data )
   m_0_results <- broom::tidy(m_0)
   final_model <- m_0
+  final_model_results <- m_0_results
   final_form <- form_0
 
   #p_values for entrance
@@ -144,7 +145,7 @@ stepwise <- function(data, outcome_var,
           pull(twin_terms) %>% unlist()
       }
 
-      m_candidate <- glm(formula = update(final_form, paste("~ . -", paste(vars, collapse = " + ") )),
+      m_candidate <- glm(formula = update(final_form, paste("~ . -", paste(vars, collapse = " - ") )),
                          family = "binomial", data = data )
 
       lr_test <- likelihood_ratio(null_model = m_candidate, model = final_model)
@@ -214,6 +215,7 @@ stepwise <- function(data, outcome_var,
               "outcome_var" = outcome_var,
               "data" = data,
               "dep_vars" = dep_vars,
+              "lookup_list" = lookup_list,
               "final_model" = final_model,
               "final_model_results" = final_model_results,
               "p_value_matrix_to_exclude" = p_value_matrix_to_exclude,

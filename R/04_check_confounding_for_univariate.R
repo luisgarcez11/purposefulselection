@@ -97,6 +97,8 @@ check_significance_for_excluded_in_step1 <- function(nonconfounded_fit, sig_leve
         left_join(nonconfounded_fit$lookup_vars_data) %>%
         filter(term %in% nonconfounded_fit$excluded_vars_step1 ) %>%
         filter(p.value > sig_level)
+      # print(paste0("removed:", term_to_remove$term))
+      # print(term_to_remove)
 
       if(nrow(term_to_remove) == 0 ){break}
 
@@ -107,8 +109,10 @@ check_significance_for_excluded_in_step1 <- function(nonconfounded_fit, sig_leve
       }
 
 
+      formula1 <- update_formula(formula1,  paste("-", paste0(variable_to_remove, collapse = " - ") ))
+
       #store model
-      model_fit <- glm(formula = update_formula(formula1,  paste("-", paste0(variable_to_remove, collapse = " - ") )),
+      model_fit <- glm(formula = formula1,
                        family = "binomial",
                        data = nonconfounded_fit$data )
 
@@ -125,7 +129,9 @@ check_significance_for_excluded_in_step1 <- function(nonconfounded_fit, sig_leve
           filter(term != "(Intercept)" ) %>%
           left_join(nonconfounded_fit$lookup_vars_data, by = "term") %>%
           relocate("variable", .after = "term")
-        }
+      }
+
+      # print(model_results)
 
     }
 

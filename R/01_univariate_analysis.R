@@ -16,12 +16,14 @@ univariate_log_fit <- function(.data, dep_vars = NULL, outcome_var = NULL,
   #store original dep_vars and .data
   original_dep_vars <- if((!is.null(dep_vars))){dep_vars}else{names(.data[,(1:ncol(.data)-1)])}
   original_data <- .data
+  original_outcome_var <- outcome_var
 
   #get outcome variable as factor
   original_data <- .data %>%
     mutate_at(outcome_var, ~ as.factor(.)) %>%
     mutate_if(is.logical, ~case_when(. == TRUE ~ 1,
-                                     . == FALSE ~ 0))
+                                     . == FALSE ~ 0))%>%
+    dplyr::relocate(outcome_var, .after = ncol(.))
 
   # if stated, define and order dep and outcome var
   if (!is.null(dep_vars) & !is.null(outcome_var)) {
@@ -35,7 +37,7 @@ univariate_log_fit <- function(.data, dep_vars = NULL, outcome_var = NULL,
       remove_selected_columns = TRUE,
       remove_most_frequent_dummy = TRUE
     )
-    .data <- .data %>% dplyr::relocate(outcome_var, .after = ncol(.))
+    outcome_var = tail(names(.data),1)
   }
 
   #removing NAs
@@ -43,7 +45,7 @@ univariate_log_fit <- function(.data, dep_vars = NULL, outcome_var = NULL,
     stats::na.omit()
 
   #setting outcome var
-  names(.data)[ncol(.data)] <- outcome_var
+  names(.data)[ncol(.data)] <- original_outcome_var
   outcome_var <- tail(names(.data), 1)
 
   #cleaning

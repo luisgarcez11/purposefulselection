@@ -7,6 +7,7 @@
 #' @param pe entrance p-value
 #' @param sig_level significance level
 #' @param term_based term based or not
+#' @param backward backward selection
 #'
 #' @return
 #' @export
@@ -17,19 +18,33 @@ wrapper_stepwise <- function(data, dep_vars, outcome_var,
                                 pr = 0.50,
                                sig_level = 0.05,
                                term_based = FALSE,
-                               return_desc = FALSE
+                               return_desc = FALSE,
+                               backward = FALSE
                                ){
 
   #remove all missing data
   data <- data[,c(dep_vars, outcome_var)] %>% stats::na.omit()
 
-  history_object <- stepwise(data = data,
-                             outcome_var = outcome_var,
-                             dep_vars = dep_vars,
-                             pe = pe,
-                             pr = pr,
-                             term_based = term_based) %>%
-    history_stepwise()
+  suppressMessages({
+
+  if(backward){
+    history_object <- stepwise_backward(data = data,
+                               outcome_var = outcome_var,
+                               dep_vars = dep_vars,
+                               pe = pe,
+                               pr = pr,
+                               term_based = term_based) %>%
+      history_stepwise()
+  }else{
+    history_object <- stepwise(data = data,
+                               outcome_var = outcome_var,
+                               dep_vars = dep_vars,
+                               pe = pe,
+                               pr = pr,
+                               term_based = term_based) %>%
+      history_stepwise()
+  }
+})
 
   if(!return_desc){
     return(history_object)}else{

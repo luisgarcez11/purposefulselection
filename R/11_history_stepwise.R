@@ -14,7 +14,7 @@ history_stepwise <- function(fit,
 
   message("compiling history...")
 
-  variables_included <- unique(fit$final_model_results$term[-1])
+  variables_included <- unique(fit$lookup_list$lookup_vars_data$term)
   if(any(is.na(variables_included))){variables_included <- variables_included[-which(is.na(variables_included))]}
 
   #set variable type
@@ -49,10 +49,10 @@ history_stepwise <- function(fit,
     stepwise_history <- as_tibble(fit$p_value_matrix_to_include, rownames = "variable") %>%
       left_join(as_tibble(fit$p_value_matrix_to_exclude, rownames = "variable"), by = "variable", suffix = c("_in", "_out")) %>%
       janitor::remove_empty(which = "cols") %>%
-      select(variable, order(colnames(.)))
+      select(variable, order(as.numeric(stringr::str_extract(colnames(.), "\\d+"))))
 
 
-    steps_main <- unique(stringr::str_extract_all(names(stepwise_history)[-which(names(stepwise_history) == "variable")], pattern = "\\d")) %>% unlist()
+    steps_main <- unique(stringr::str_extract_all(names(stepwise_history)[-which(names(stepwise_history) == "variable")], pattern = "\\d+")) %>% unlist()
     number_steps <- max(as.numeric(steps_main))
 
     if(!is.null(fit$p_value_matrix_to_exclude_interactions)){
@@ -80,7 +80,7 @@ history_stepwise <- function(fit,
       if(!col_out %in% names(stepwise_history)){stepwise_history[[col_out]] <- NA; stepwise_history <-  stepwise_history %>%
         dplyr::relocate(all_of(col_out), .after = col_in)}
 
-      stepwise_history[[colname]] <- case_when( ((stepwise_history[[col_out]] == suppressWarnings(max(stepwise_history[[col_in]], na.rm=TRUE))) &
+      stepwise_history[[colname]] <- case_when( ((stepwise_history[[col_out]] == suppressWarnings(max(stepwise_history[[col_out]], na.rm=TRUE))) &
                                                    (stepwise_history[[col_out]]  > fit$p_value_removal) ) ~ "out",
                  ((stepwise_history[[col_in]] == suppressWarnings(min(stepwise_history[[col_in]], na.rm=TRUE)) ) &
                                                    (stepwise_history[[col_in]]  < fit$p_value_entrance) & (stepwise_history[[col_out]]  < fit$p_value_removal)) ~ "in",
@@ -104,7 +104,7 @@ history_stepwise <- function(fit,
     stepwise_history <- as_tibble(fit$p_value_matrix_to_exclude, rownames = "variable") %>%
       left_join(as_tibble(fit$p_value_matrix_to_include, rownames = "variable"), by = "variable", suffix = c("_out", "_in")) %>%
       janitor::remove_empty(which = "cols") %>%
-      select(variable, order(colnames(.)))
+      select(variable, order(as.numeric(stringr::str_extract(colnames(.), "\\d+"))))
 
     steps_main <- unique(stringr::str_extract_all(names(stepwise_history)[-which(names(stepwise_history) == "variable")], pattern = "\\d+")) %>% unlist()
     number_steps <- max(as.numeric(steps_main))
@@ -132,15 +132,19 @@ history_stepwise <- function(fit,
 
 
       if(!col_in %in% names(stepwise_history)){stepwise_history[[col_in]] <- NA}
-      if(!col_out %in% names(stepwise_history)){stepwise_history[[col_in]] <- NA}
+      if(!col_out %in% names(stepwise_history)){stepwise_history[[col_out]] <- NA}
 
 
-      stepwise_history[[colname]] <- case_when( ((stepwise_history[[col_in]] == suppressWarnings(min(stepwise_history[[col_in]], na.rm=TRUE))) & (stepwise_history[[col_in]]  < fit$p_value_entrance) ) ~ "in",
-                                                ((stepwise_history[[col_out]] == max(stepwise_history[[col_out]], na.rm=TRUE)) & (stepwise_history[[col_out]]  > fit$p_value_removal) & (stepwise_history[[col_out]]  > fit$p_value_removal)) ~ "out",
-                                                (!is.na(stepwise_history[[col_out]]) & (stepwise_history[[col_in]]  < fit$p_value_entrance)) ~ "in",
-                                                (is.na(stepwise_history[[col_out]]) & (stepwise_history[[col_in]]  > fit$p_value_removal)) ~ "out",
+      if( !all(is.na(stepwise_history[[col_in]])) ){
+              stepwise_history[[colname]] <- case_when( ((stepwise_history[[col_in]] == suppressWarnings(min(stepwise_history[[col_in]], na.rm=TRUE))) & (stepwise_history[[col_in]]  < fit$p_value_entrance) ) ~ "in",
+                                                ((stepwise_history[[col_out]] == max(stepwise_history[[col_out]], na.rm=TRUE)) & (stepwise_history[[col_in]]  > fit$p_value_entrance) ) ~ "out",
+                                                (!is.na(stepwise_history[[col_out]]) & (stepwise_history[[col_out]]  < fit$p_value_removal) ) ~ "in",
+                                                (is.na(stepwise_history[[col_out]]) & (stepwise_history[[col_in]]  > fit$p_value_entrance)) ~ "out",
                                                 (is.na(stepwise_history[[col_in]]) & is.na(stepwise_history[[col_out]]) ) ~ NA_character_,
                                                 TRUE ~ "in")
+      }else{
+        stepwise_history[[colname]] <- "in"
+      }
 
       if(colname_former != "0_desc"){
 
@@ -162,17 +166,17 @@ history_stepwise <- function(fit,
     as_tibble() %>%
     dplyr::rename_all(~paste0(., "_desc")) %>%
     janitor::remove_empty(which = "cols") %>%
-    mutate_all(~as.character(round(., 2)))
+    mutate_all(~as.character(round(., 4)))
 
   acc_history <- fit$acc_history %>%
     as_tibble() %>%
     dplyr::rename_all(~paste0(., "_desc")) %>%
     janitor::remove_empty(which = "cols") %>%
-    mutate_all(~as.character(round(., 2)))
+    mutate_all(~as.character(round(., 4)))
 
   #add AUC and accuracy
   stepwise_history <- stepwise_history %>%
-    mutate_if(is.double, ~round(., 2)) %>%
+    mutate_if(is.double, ~round(., 4)) %>%
     add_row(variable = "AUC", auc_history) %>%
     add_row(variable = "Accuracy", acc_history)
 
@@ -183,7 +187,7 @@ history_stepwise <- function(fit,
   #add outcome proportion
   stepwise_history <- stepwise_history %>%
     add_row(variable = "outcome_proportion",
-            final_desc = as.character(round(max(prop.table(table(fit$data[[fit$outcome_var]]))), 2))
+            final_desc = as.character(round(max(prop.table(table(fit$data[[fit$outcome_var]]))), 4))
     )
 
   #add term variable & description
@@ -192,7 +196,7 @@ history_stepwise <- function(fit,
     mutate(type = case_when(term %in% num_terms ~ "numeric",
                             term %in% cat_terms ~ "categorical")) %>%
     relocate("type", .after = "term") %>%
-    left_join(fit$final_model_results[,c("variable", "term")], by = "term") %>%
+    left_join(fit$lookup_list$lookup_vars_data[,c("variable", "term")], by = "term") %>%
     mutate(variable = case_when(term %in% c("AUC", "Accuracy", "outcome_proportion") ~ term,
                                 TRUE ~ variable)) %>%
     mutate(n_occurr = purrr::map2_int(.x = term, .y = type, .f = ~case_when(.y == "categorical" ~ sum(fit$data[[.x]])))) %>%

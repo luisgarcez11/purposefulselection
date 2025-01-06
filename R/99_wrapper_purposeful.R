@@ -28,11 +28,23 @@ wrapper_purposeful <- function(data, dep_vars, outcome_var,
   #remove all missing data
   data <- data[,c(dep_vars, outcome_var)] %>% stats::na.omit()
 
-  history_object <- univariate_log_fit(.data = data, outcome_var = outcome_var, dep_vars = dep_vars, term_based = term_based, multivariate = multivariate_uni) %>%
-    multivariable_log_fit(p_value_entrance = pe, sig_level = sig_level, sig_lr = sig_lr, force_entry = force_entry_) %>% #reduced model
-    check_confounding_for_excluded_in_step2( delta_beta_threshold = delta_beta_threshold, max_term_combinations = max_term_combinations) %>% #preliminary main effects model
-    check_significance_for_excluded_in_step1( sig_level = sig_level) %>%
-    history()
+  message(paste("\nPARAMETERS:\n",
+                # "Cramer V",  round(vcd::assocstats(table(data$y, unlist(data[,dep_vars[1]])))$cramer,1), "\n",
+                # "Y proportion:", prop.table(table(data$y))[["1"]], "\n",
+                "Entry p-value:", pe, "\n",
+                "Beta Threshold:", delta_beta_threshold, "\n",
+                "Significance Level:", sig_level, "\n",
+                "# Vars", length(dep_vars), "\n",
+                # "# Unique Categories" , length(unique(unlist(data[,dep_vars[1]]))), "\n",
+                "System time:", Sys.time()))
+
+  suppressMessages({
+    history_object <- univariate_log_fit(.data = data, outcome_var = outcome_var, dep_vars = dep_vars, term_based = term_based, multivariate = multivariate_uni) %>%
+      multivariable_log_fit(p_value_entrance = pe, sig_level = sig_level, sig_lr = sig_lr, force_entry = force_entry_) %>% #reduced model
+      check_confounding_for_excluded_in_step2( delta_beta_threshold = delta_beta_threshold, max_term_combinations = max_term_combinations) %>% #preliminary main effects model
+      check_significance_for_excluded_in_step1( sig_level = sig_level) %>%
+      history()}
+  )
 
   if(!return_desc){
     return(history_object)}else{

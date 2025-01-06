@@ -20,7 +20,12 @@ Imports:
     condformat,
     ggplot2,
     fuzzyjoin,
-    fastDummies
+    fastDummies,
+    speedglm, 
+    testthat,
+    fuzzyjoin,
+    fastDummies,
+    gtools
 LazyData: true
 Depends: 
     R (>= 2.10)

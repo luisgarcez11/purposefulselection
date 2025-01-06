@@ -157,43 +157,43 @@ history <- function(fit,
     mutate(final_desc = case_when( check_uni_exclusions_desc == "in" ~ "in",
                                    check_uni_exclusions_desc == "out" ~ "out",
                                           TRUE ~ "in")) %>%
-    mutate_if(is.double, ~round(., 2))
+    mutate_if(is.double, ~round(., 4))
 
 
   #add AUC
   history_fit <- history_fit %>%
     add_row(variable = "AUC",
-            larger_model_desc = as.character(round(fit$larger_model_auc,2)),
-            reduced_model_desc = as.character(round(fit$reduced_model_auc,2)),
-            check_confounding_desc = as.character(round(fit$check_coef_variation_auc , 2)),
-            check_uni_exclusions_desc = as.character(round(fit$model_fit_auc , 2)),
-            final_desc = as.character(round(fit$model_fit_auc , 2))
+            larger_model_desc = as.character(round(fit$larger_model_auc,4)),
+            reduced_model_desc = as.character(round(fit$reduced_model_auc,4)),
+            check_confounding_desc = as.character(round(fit$check_coef_variation_auc , 4)),
+            check_uni_exclusions_desc = as.character(round(fit$model_fit_auc , 4)),
+            final_desc = as.character(round(fit$model_fit_auc , 4))
             ) %>%
     add_row(variable = "Accuracy",
-            larger_model_desc = as.character(round(fit$larger_model_acc,2)),
-            reduced_model_desc = as.character(round(fit$reduced_model_acc,2)),
-            check_confounding_desc = as.character(round(fit$check_coef_variation_acc , 2)),
-            check_uni_exclusions_desc = as.character(round(fit$model_fit_acc , 2)),
-            final_desc = as.character(round(fit$model_fit_acc , 2)))
+            larger_model_desc = as.character(round(fit$larger_model_acc,4)),
+            reduced_model_desc = as.character(round(fit$reduced_model_acc,4)),
+            check_confounding_desc = as.character(round(fit$check_coef_variation_acc , 4)),
+            check_uni_exclusions_desc = as.character(round(fit$model_fit_acc , 4)),
+            final_desc = as.character(round(fit$model_fit_acc , 4)))
 
   #add multivariate testss
   history_fit <- history_fit %>%
     add_row(variable = "multivariate_wald",
-            larger_model_desc = tryCatch(as.character(round(fit$complete_larger_wald_p_value,2)),
+            larger_model_desc = tryCatch(as.character(round(fit$complete_larger_wald_p_value,3)),
                                         error = function(e) {return("NA")}),
-            reduced_model_desc = as.character(round(as.numeric(fit$larger_reduced_wald_p_value) , 2)),
-            check_confounding_desc = as.character(round(as.numeric(fit$reduced_conf_wald_p_value) , 2))
+            reduced_model_desc = as.character(round(as.numeric(fit$larger_reduced_wald_p_value) , 3)),
+            check_confounding_desc = as.character(round(as.numeric(fit$reduced_conf_wald_p_value) , 3))
     ) %>%
     add_row(variable = "multivariate_lr",
-            larger_model_desc = as.character(round(fit$complete_larger_lr_p_value , 2)),
-            reduced_model_desc = as.character(round(fit$larger_reduced_lr_p_value,2)),
-            check_confounding_desc = as.character(round(fit$reduced_conf_wald_p_value , 2))
+            larger_model_desc = as.character(round(fit$complete_larger_lr_p_value , 3)),
+            reduced_model_desc = as.character(round(fit$larger_reduced_lr_p_value,3)),
+            check_confounding_desc = as.character(round(fit$reduced_conf_wald_p_value , 3))
     )
 
   #add outcome proportion
   history_fit <- history_fit %>%
     add_row(variable = "outcome_proportion",
-            final_desc = as.character(round(max(prop.table(table(fit$data[[fit$outcome_var]]))), 2))
+            final_desc = as.character(round(max(prop.table(table(fit$data[[fit$outcome_var]]))), 3))
     ) %>%
     add_row(variable = "n_added_back",
             check_confounding_desc = as.character(fit$n_coef_added_back)
